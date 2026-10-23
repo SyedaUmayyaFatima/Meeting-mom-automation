@@ -17,7 +17,7 @@ gets admin approval, and distributes the MoM to participants with acknowledgemen
 n8n · Recall.ai · OpenAI API · Supabase (Postgres) · Gmail OAuth2 · Google Calendar
 
 ## Setup
-1. Import each file from `workflows/` into n8n (**Workflows → Import from file**).
+1. Import each workflow `.json` file into n8n (**Workflows → Import from file**).
 2. Create your own credentials in n8n: Postgres/Supabase, Gmail OAuth2, Google Calendar OAuth2, Header Auth (Recall.ai).
 3. In workflows 1 and 2, find the **Edit Fields** node and replace `YOUR_RECALL_API_KEY` / `YOUR_OPENAI_API_KEY` with your keys
    (better: store them as n8n credentials or environment variables).
