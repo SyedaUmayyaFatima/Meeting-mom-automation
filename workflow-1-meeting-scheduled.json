@@ -1,0 +1,820 @@
+{
+  "name": "workflow-1-meeting-scheduled",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT COUNT(*) as count FROM meetings WHERE series_name = '{{ $json.series_name }}'",
+        "options": {}
+      },
+      "name": "Get Meeting Count",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        -800,
+        3264
+      ],
+      "id": "38825293-b115-4cb3-b582-2130609d428b",
+      "typeVersion": 2.6,
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the count from previous node\nconst count = $input.first().json.count || 0;\n\n// Get all meeting data from Edit Fields node\nconst meetingData = $('Edit Fields').first().json;\n\n// Return meeting data with incremented number\nreturn [{\n  json: {\n    ...meetingData,\n    meeting_number: parseInt(count) + 1\n  }\n}];"
+      },
+      "name": "Set Meeting Number",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -736,
+        3552
+      ],
+      "id": "68b2d77e-8091-462c-9233-994174d2ebc5",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO meeting_participants \n  (meeting_id, participant_id, attendance_status, checkin_token, name, email)\nSELECT \n  '{{ $(\"Extract Attendees1\").all()[$itemIndex].json.meeting_id }}',\n  p.id,\n  'pending',\n  '{{ $(\"Extract Attendees1\").all()[$itemIndex].json.checkin_token }}',\n  p.name,\n  p.email\nFROM participants p\nWHERE p.email = '{{ $(\"Extract Attendees1\").all()[$itemIndex].json.email }}'\nON CONFLICT (meeting_id, participant_id) DO NOTHING",
+        "options": {}
+      },
+      "name": "Insert Participants",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        560,
+        3008
+      ],
+      "id": "0942d5b4-c54b-4585-bb1c-493abc60ca4b",
+      "typeVersion": 2.6,
+      "executeOnce": false,
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "calendarId": {
+          "__rl": true,
+          "value": "1fe1d667e09eb91601a11110b96f262406629388e74d324c46a7b153d915f301@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Meeting Automation System"
+        },
+        "triggerOn": "eventCreated",
+        "options": {}
+      },
+      "name": "Google Calendar Trigger",
+      "type": "n8n-nodes-base.googleCalendarTrigger",
+      "position": [
+        -1264,
+        3504
+      ],
+      "id": "2e4c11d6-f06a-48dd-a517-164365068897",
+      "typeVersion": 1,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "D5bnCCgS7ojUIa53",
+          "name": "Google Calendar OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a48629ce-e42f-4895-9f86-927511a11ccb",
+              "name": "RECALL_API_KEY",
+              "value": "YOUR_RECALL_API_KEY",
+              "type": "string"
+            },
+            {
+              "id": "906510ca-137f-42a2-bfd6-6538d1373e95",
+              "name": "GOOGLE_CALENDAR_ID",
+              "value": "1fe1d667e09eb91601a11110b96f262406629388e74d324c46a7b153d915f301@group.calendar.google.com",
+              "type": "string"
+            },
+            {
+              "id": "a8b502cd-6321-4de4-85b3-6d6a60c1bb93",
+              "name": "FROM_EMAIL",
+              "value": "fatimsyedaumayya@gmail.com",
+              "type": "string"
+            },
+            {
+              "id": "56614090-d839-40a6-a964-4f16b201dfd8",
+              "name": "ADMIN_EMAIL",
+              "value": "khadijafatima2301@gmail.com",
+              "type": "string"
+            },
+            {
+              "id": "97827a9b-b2c4-4688-a5ca-d1fa926a9270",
+              "name": "APP_URL",
+              "value": "https://meeting-dashboard-gilt.vercel.app",
+              "type": "string"
+            },
+            {
+              "id": "series-name-field",
+              "name": "series_name",
+              "value": "={{ $json.summary }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -992,
+        3552
+      ],
+      "id": "97a6233c-e7d2-4614-aa63-fbd94c71f836",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "schema": "public",
+        "table": "meetings",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "title": "={{ $json.summary }}",
+            "date": "={{ $json.start.dateTime }}",
+            "meeting_url": "={{ $json.hangoutLink }}",
+            "status": "scheduled",
+            "platform": "google_meet",
+            "series_name": "={{ $json.series_name }}",
+            "meeting_number": "={{ $json.meeting_number }}",
+            "agenda": "={{ $('Google Calendar Trigger').first().json.description }}"
+          },
+          "matchingColumns": [
+            "meeting_url"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "series_name",
+              "displayName": "series_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "meeting_number",
+              "displayName": "meeting_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "platform",
+              "displayName": "platform",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "agenda",
+              "displayName": "agenda",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "meeting_url",
+              "displayName": "meeting_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "recall_bot_id",
+              "displayName": "recall_bot_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "Save Meeting to Supabase",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        -480,
+        3376
+      ],
+      "id": "e0015dca-17c3-46e1-864d-c8c0a79cfc2b",
+      "typeVersion": 2.6,
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      },
+      "notes": "Connection: Supabase Postgres. Host: db.<project>.supabase.co Port: 5432"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://us-west-2.recall.ai/api/v1/bot",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"meeting_url\": \"{{ $json.meeting_url }}\",\n  \"bot_name\": \"MeetingBot\",\n  \"recording_config\": {\n    \"transcript\": {\n      \"provider\": {\n        \"meeting_captions\": {}\n      }\n    }\n  },\n  \"realtime_endpoints\": [],\n  \"webhook_subscriptions\": [\n    {\n      \"events\": [\n        \"participant_events.join\",\n        \"participant_events.leave\",\n        \"participant_events.done\",\n        \"recording.done\"\n      ],\n      \"url\": \"https://umayyafatima.app.n8n.cloud/webhook/recall-attendance\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "name": "Schedule Recall.ai Bot",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -272,
+        3424
+      ],
+      "id": "00100ed2-96fb-4846-8046-7583532fdf71",
+      "typeVersion": 4.4,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "r40O3OFyh1ogEoft",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": "public",
+        "table": "meetings",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "recall_bot_id": "={{ $json.id }}",
+            "id": "={{ $('Save Meeting to Supabase').first().json.id }}",
+            "meeting_number": 0
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "series_name",
+              "displayName": "series_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "meeting_number",
+              "displayName": "meeting_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "platform",
+              "displayName": "platform",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "agenda",
+              "displayName": "agenda",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "meeting_url",
+              "displayName": "meeting_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "recall_bot_id",
+              "displayName": "recall_bot_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "Save Bot ID to Supabase",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        -16,
+        3456
+      ],
+      "id": "362c3c53-3926-4a64-a611-fa77f576bb22",
+      "typeVersion": 2.6,
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get calendar event and meeting ID\nconst calEvent = $('Google Calendar Trigger').first().json;\nconst meetingId = $('Save Meeting to Supabase').first().json.id;\nconst meetingTitle = calEvent.summary;\n\n// Extract attendees array from calendar event\nconst attendees = calEvent.attendees || [];\n\n// If no attendees, return empty indicator\nif (attendees.length === 0) {\n  return [{ \n    json: { \n      meeting_id: meetingId,\n      meeting_title: meetingTitle,\n      no_attendees: true \n    } \n  }];\n}\n\n// Map each attendee to a participant record\nreturn attendees.map(attendee => ({\n  json: {\n    meeting_id: meetingId,\n    meeting_title: meetingTitle,\n    agenda: calEvent.description || null,\n    participant_id: null, // will be set by Insert/Upsert Participants node\n    name: attendee.displayName || attendee.email.split('@')[0],\n    email: attendee.email,\n    attendance_status: 'scheduled',\n    checkin_token: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`\n  }\n}));"
+      },
+      "name": "Extract Attendees1",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        192,
+        3456
+      ],
+      "id": "3ed811fb-6c20-4407-bc2a-df981028d2b3",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": "public",
+        "table": "meeting_participants",
+        "returnAll": true,
+        "where": {
+          "values": [
+            {
+              "column": "meeting_id",
+              "value": "={{ $('Save Meeting to Supabase').first().json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Get Participants",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        624,
+        3328
+      ],
+      "id": "05e9286a-448d-4bc2-ba3c-db0069b9dd8f",
+      "typeVersion": 2.6,
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Split Into Participants",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [
+        832,
+        3232
+      ],
+      "id": "d2e4c7d1-fc3c-4d6e-88c6-92ed780068f7",
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "=Check-in for: {{ $('Extract Attendees1').first().json.meeting_title }}",
+        "message": "=<p>Hi {{ $json.name }},</p>\n<p>Your meeting <strong>{{ $('Extract Attendees1').first().json.meeting_title }}</strong> is scheduled for <strong>{{ new Date($('Google Calendar Trigger').first().json.start.dateTime).toLocaleString('en-US', {dateStyle: 'full', timeStyle: 'short'}) }}</strong>.</p>\n<p><strong>📋 Agenda:</strong> {{ $('Extract Attendees1').first().json.agenda || 'No agenda provided' }}</p>\n<p><a href='{{ $('Edit Fields').first().json.APP_URL }}/checkin/{{ $json.checkin_token }}' style='background:#4f46e5;color:white;padding:10px 20px;border-radius:6px;text-decoration:none'>✅ Confirm Attendance</a></p>",
+        "options": {}
+      },
+      "name": "Send Check-in Email",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        1056,
+        3552
+      ],
+      "id": "214a0646-c67e-4bb9-b3cc-1913e324289c",
+      "typeVersion": 2.2,
+      "webhookId": "782cb9bb-784a-4e51-a361-960c65883d9e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "tnayGCfWNoL9m6ok",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO participants (name, email)\nVALUES ($1, $2)\nON CONFLICT (email) \nDO NOTHING\nRETURNING id, name, email",
+        "options": {
+          "queryReplacement": "={{ $json.name }}\n{{ $json.email }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        384,
+        3536
+      ],
+      "id": "e94fd64b-f763-453d-829f-3a8afeb8e1f6",
+      "name": "Upsert to Participants Table",
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "dedup-1",
+              "leftValue": "={{ $json.recall_bot_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "df6877b8-511b-4e0d-a31f-396aa0cba667",
+      "name": "Bot Already Scheduled?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1136,
+        2640
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "8ef87ee4-60a3-42d6-9fa8-4fab44e563f3",
+      "name": "Loop Over Attendees",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        384,
+        3248
+      ]
+    }
+  ],
+  "connections": {
+    "Get Meeting Count": {
+      "main": [
+        [
+          {
+            "node": "Set Meeting Number",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Meeting Number": {
+      "main": [
+        [
+          {
+            "node": "Save Meeting to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Participants": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Attendees",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Get Meeting Count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Meeting to Supabase": {
+      "main": [
+        [
+          {
+            "node": "Bot Already Scheduled?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Recall.ai Bot": {
+      "main": [
+        [
+          {
+            "node": "Save Bot ID to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Bot ID to Supabase": {
+      "main": [
+        [
+          {
+            "node": "Extract Attendees1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Attendees1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Attendees",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Participants": {
+      "main": [
+        [
+          {
+            "node": "Split Into Participants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Into Participants": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Send Check-in Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert to Participants Table": {
+      "main": [
+        [
+          {
+            "node": "Insert Participants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bot Already Scheduled?": {
+      "main": [
+        [
+          {
+            "node": "Schedule Recall.ai Bot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Attendees": {
+      "main": [
+        [
+          {
+            "node": "Get Participants",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Upsert to Participants Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d8d1d1fb-3f19-4436-bdad-e6675dfc5531",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2ec49346647211f79bda7eec12cd8ff8fbab2658e19393c3ab99a059f6e75e43"
+  },
+  "id": "LlBZPFX3sX26wSmH",
+  "tags": []
+}

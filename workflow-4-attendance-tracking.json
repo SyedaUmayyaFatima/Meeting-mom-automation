@@ -1,0 +1,808 @@
+{
+  "name": "WF4 - Attendance Tracking (Real-time)",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c-known",
+              "leftValue": "={{ $json.is_known }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2351460e-220c-4f68-a43b-dbf3183927f9",
+      "name": "Is Known Participant?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        -768
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH new_participant AS (\n  INSERT INTO participants (id, name, email)\n  VALUES (\n    gen_random_uuid(),\n    '{{ $json.participantName }}',\n    LOWER(REPLACE('{{ $json.participantName }}', ' ', '')) || '@unknown.com'\n  )\n  ON CONFLICT (email) DO UPDATE\n    SET name = EXCLUDED.name\n  RETURNING id, name, email\n)\nINSERT INTO meeting_participants\n  (meeting_id, participant_id, attendance_status, join_time, name, email)\nSELECT\n  '{{ $json.meeting_id }}',\n  np.id,\n  'present',\n  NOW(),\n  np.name,\n  np.email\nFROM new_participant np\nON CONFLICT (meeting_id, participant_id) DO UPDATE SET\n  attendance_status = 'present',\n  join_time = COALESCE(meeting_participants.join_time, EXCLUDED.join_time)",
+        "options": {}
+      },
+      "id": "d0e6df2a-4c25-42e8-a49b-ed30049bd1b4",
+      "name": "Auto Register Participant",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        832,
+        -768
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "recall-attendance",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "6ee76332-f5d9-4d33-9073-ee4db23c1a3c",
+      "name": "Recall.ai Attendance Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -4160,
+        2384
+      ],
+      "webhookId": "34644bca-61d9-46a4-9b74-2b00b040f1a8"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst event = body.event;\nconst data = body.data || {};\n\nlet eventType = null;\nlet botId = null;\nlet participantName = null;\nlet joinTime = null;\nlet leaveTime = null;\n\nbotId = data.bot?.id || body.bot_id || null;\n\n// Extract participant name from correct location\nif (event === \"participant_events.join\") {\n  eventType = \"join\";\n  participantName = data.participant?.name \n    || body.participant?.name \n    || data.name \n    || null;\n  joinTime = data.timestamp || data.joined_at || new Date().toISOString();\n\n} else if (event === \"participant_events.leave\") {\n  eventType = \"leave\";\n  participantName = data.participant?.name \n    || body.participant?.name \n    || data.name \n    || null;\n  leaveTime = data.timestamp || data.left_at || new Date().toISOString();\n\n} else if (event === \"bot.done\" || event === \"recording.done\" || event === \"participant_events.done\") {\n  eventType = \"done\";\n\n} else {\n  eventType = \"unknown\";\n}\n\nconst recordingId = data.recording?.id || body.recording?.id || null;\n\nreturn [{\n  json: {\n    event,\n    eventType,\n    participantName,\n    botId,\n    joinTime,\n    leaveTime,\n    recordingId,\n    rawData: body,\n    ts: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "e8ff42ba-ea0e-4edc-bbdd-a07e602bd9fb",
+      "name": "Parse Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3936,
+        2384
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://us-west-2.recall.ai/api/v1/bot/{{ $('Parse Event').first().json.botId }}/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Token YOUR_RECALL_API_KEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "476e4aa8-4d3d-4670-bb5b-f935f56c990e",
+      "name": "Get Participant Events",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3760,
+        2224
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const botData = $input.first().json;\nconst prevData = $('Parse Event').first().json;\n\nconst recording = botData.recordings?.[0];\nconst mediaShortcuts = recording?.media_shortcuts;\n\nconst participantsUrl = \n  mediaShortcuts?.participant_events?.data?.participants_download_url ||\n  mediaShortcuts?.participant_events?.data?.participant_events_download_url ||\n  null;\n\nreturn [{\n  json: {\n    ...prevData,\n    participantsUrl,\n    eventType: participantsUrl ? 'fetch_needed' : 'skip'\n  }\n}];"
+      },
+      "id": "9974522f-e364-4d47-ab40-b65b44da2f80",
+      "name": "Extract Download URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3568,
+        2432
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.participantsUrl }}",
+        "options": {}
+      },
+      "id": "550f17a4-326d-4123-bd07-49d5b61af85a",
+      "name": "Download Participants",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3120,
+        2240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const parsed = $('Parse Event').first().json;\n\n// For done events, get all participants from Download Participants\nif (parsed.eventType === 'done') {\n  const participants = $input.all();\n  return participants.map(item => ({\n    json: {\n      event: parsed.event,\n      eventType: parsed.eventType,\n      participantName: item.json.name,\n      botId: parsed.botId,\n      joinTime: null,\n      leaveTime: null,\n      recordingId: parsed.recordingId\n    }\n  }));\n}\n\n// For join/leave events, participant name already in Parse Event\nreturn [{\n  json: {\n    event: parsed.event,\n    eventType: parsed.eventType,\n    participantName: parsed.participantName,\n    botId: parsed.botId,\n    joinTime: parsed.joinTime,\n    leaveTime: parsed.leaveTime,\n    recordingId: parsed.recordingId\n  }\n}];"
+      },
+      "id": "ae59da67-d310-422e-96ce-c49e03c88d20",
+      "name": "Extract Name",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2944,
+        2288
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c-join",
+              "leftValue": "={{ $json.event }}  is equal to  participant_events.join",
+              "rightValue": "join",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "9afb3e19-3d5b-473b-832d-5de737d87ba2",
+      "name": "Is Join Event?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -2816,
+        2048
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c-leave",
+              "leftValue": "={{ $json.event }}  is equal to  participant_events.leave",
+              "rightValue": "leave",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2e0775db-1cda-4a30-82cb-50d3a539d7b9",
+      "name": "Is Leave Event?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -2752,
+        2368
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c-done",
+              "leftValue": "={{ $json.eventType }}",
+              "rightValue": "done",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6520f9f6-ce3a-45a2-908e-ec431a8b2875",
+      "name": "Is Done Event?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -3072,
+        2640
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT m.id AS meeting_id, p.id AS participant_id, p.name AS \"participantName\", p.email\nFROM meetings m\nLEFT JOIN participants p ON LOWER(p.name) = LOWER($2)\nWHERE m.recall_bot_id = $1\nAND p.id IS NOT NULL\nLIMIT 1",
+        "options": {
+          "queryReplacement": "={{ $json.botId }}\n={{ $json.participantName }}"
+        }
+      },
+      "id": "a2a11af3-5625-48c2-9f8f-6fce005faf04",
+      "name": "Get IDs for Join",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -2640,
+        1920
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO meeting_participants (meeting_id, participant_id, attendance_status, join_time, name, email)\nSELECT\n  $1::uuid,\n  p.id,\n  'present',\n  CASE \n    WHEN $3 = '' OR $3 = 'undefined' OR $3 IS NULL\n    THEN NOW() \n    ELSE $3::timestamptz \n  END,\n  p.name,\n  p.email\nFROM participants p\nWHERE p.id = $2::uuid\nON CONFLICT (meeting_id, participant_id)\nDO UPDATE SET\n  attendance_status = 'present',\n  join_time = COALESCE(meeting_participants.join_time, EXCLUDED.join_time),\n  name = COALESCE(meeting_participants.name, EXCLUDED.name),\n  email = COALESCE(meeting_participants.email, EXCLUDED.email)",
+        "options": {
+          "queryReplacement": "={{ $json.meeting_id }}\n={{ $json.participant_id }}\n={{ $json.joinTime }}"
+        }
+      },
+      "id": "8c9b5fc9-1e93-4ea5-871c-b6e64dd4da06",
+      "name": "Upsert Join",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -1936,
+        1936
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT m.id AS meeting_id, p.id AS participant_id, p.name AS \"participantName\", p.email\nFROM meetings m\nLEFT JOIN participants p ON (\n  LOWER(p.name) = LOWER($2)\n  OR LOWER(SPLIT_PART(p.email, '@', 1)) LIKE '%' || LOWER(SPLIT_PART($2, ' ', 1)) || '%'\n)\nWHERE m.recall_bot_id = $1\nLIMIT 1",
+        "options": {
+          "queryReplacement": "={{ $json.botId }}\n={{ $json.participantName }}"
+        }
+      },
+      "id": "02b114c0-d57d-4b2b-8a7e-d55b9dbaf7fb",
+      "name": "Get IDs for Leave",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -2320,
+        2416
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE meeting_participants\nSET leave_time = NOW(),\n    attendance_status = 'present'\nWHERE meeting_id = $1::uuid\n  AND participant_id = $2::uuid",
+        "options": {
+          "queryReplacement": "={{ $json.meeting_id }}\n={{ $json.participant_id }}"
+        }
+      },
+      "id": "c1633e7f-c265-4404-bff1-dffa32451f61",
+      "name": "Update Leave Time",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -2032,
+        2624
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE meeting_participants\nSET attendance_status = 'absent'\nWHERE meeting_id = (\n  SELECT id FROM meetings WHERE recall_bot_id = $1 LIMIT 1\n)\nAND attendance_status = 'pending'",
+        "options": {
+          "queryReplacement": "={{ $('Parse Event').first().json.botId }}"
+        }
+      },
+      "id": "3f3cd22a-8053-4aac-ba64-2cc5cca87d77",
+      "name": "Mark Absent (No Join)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -2432,
+        2592
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"ok\" }",
+        "options": {}
+      },
+      "id": "7149b5a8-7ce0-4e2e-b107-fc213f843d87",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -1776,
+        2176
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2709624b-cd58-4c8b-8234-51fe5ebaa0ae",
+              "leftValue": "={{ $json.participantsUrl }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -3328,
+        2464
+      ],
+      "id": "b50e117c-2a8d-4c91-b207-325cf6e35fd5",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst events = response.results || [];\nconst botId = $('Parse Event').first().json.botId;\n\n// Get meeting_id from database\nconst participantMap = {};\n\nfor (const event of events) {\n  const name = event.participant?.name || 'Unknown';\n  const code = event.event?.code || '';\n  const timestamp = event.created_at || null;\n\n  if (!participantMap[name]) {\n    participantMap[name] = {\n      participantName: name,\n      joinTime: null,\n      leaveTime: null,\n      botId: botId,\n      attendanceStatus: 'absent'\n    };\n  }\n\n  if (code === 'join' || code === 'joined') {\n    participantMap[name].joinTime = timestamp;\n    participantMap[name].attendanceStatus = 'present';\n  }\n\n  if (code === 'leave' || code === 'left') {\n    participantMap[name].leaveTime = timestamp;\n  }\n}\n\nreturn Object.values(participantMap).map(p => ({ json: p }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2192,
+        1936
+      ],
+      "id": "491b9f74-db84-436d-aedb-1ce59d80bef1",
+      "name": "Code in JavaScript",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c-known",
+              "leftValue": "={{ $json.is_known }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "9b36448a-9b89-4362-8f90-a76e37b73c4d",
+      "name": "Is Known Participant?1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1952,
+        1744
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH matched AS (\n  SELECT id FROM participants\n  WHERE LOWER(name) = LOWER($1)\n  LIMIT 1\n),\ninserted AS (\n  INSERT INTO participants (id, name, email)\n  SELECT gen_random_uuid(), $1, LOWER(REPLACE($1, ' ', '.')) || '@gmail.com'\n  WHERE NOT EXISTS (SELECT 1 FROM matched)\n  RETURNING id\n),\nfinal_id AS (\n  SELECT id FROM matched\n  UNION ALL\n  SELECT id FROM inserted\n  LIMIT 1\n)\nINSERT INTO meeting_participants \n  (meeting_id, participant_id, attendance_status, join_time, name, email)\nSELECT\n  m.id,\n  f.id,\n  'present',\n  NOW(),\n  $1,\n  (SELECT email FROM participants WHERE id = f.id)\nFROM meetings m, final_id f\nWHERE m.recall_bot_id = $2\nON CONFLICT (meeting_id, participant_id) DO UPDATE SET\n  attendance_status = 'present',\n  join_time = COALESCE(meeting_participants.join_time, NOW());",
+        "options": {
+          "queryReplacement": "=={{ $json.participantName }}\n={{ $('Parse Event').first().json.botId }}"
+        }
+      },
+      "id": "d0548a91-af0c-4939-ac81-db3ea99f65c1",
+      "name": "Auto Register Participant1",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -1712,
+        1408
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c-known",
+              "leftValue": "={{ $json.is_known }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "507cdf52-41b4-4fe7-8cc9-d3ef56a7051e",
+      "name": "Is Known Participant?2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        272,
+        -176
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH new_participant AS (\n  INSERT INTO participants (id, name, email)\n  VALUES (\n    gen_random_uuid(),\n    '{{ $json.participantName }}',\n    LOWER(REPLACE('{{ $json.participantName }}', ' ', '')) || '@unknown.com'\n  )\n  ON CONFLICT (email) DO UPDATE\n    SET name = EXCLUDED.name\n  RETURNING id, name, email\n)\nINSERT INTO meeting_participants\n  (meeting_id, participant_id, attendance_status, join_time, name, email)\nSELECT\n  '{{ $json.meeting_id }}',\n  np.id,\n  'present',\n  NOW(),\n  np.name,\n  np.email\nFROM new_participant np\nON CONFLICT (meeting_id, participant_id) DO UPDATE SET\n  attendance_status = 'present',\n  join_time = COALESCE(meeting_participants.join_time, EXCLUDED.join_time)",
+        "options": {}
+      },
+      "id": "a4412519-7b81-448d-89e3-67332acd0fb0",
+      "name": "Auto Register Participant2",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        0,
+        -176
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Is Known Participant?": {
+      "main": [
+        [],
+        []
+      ]
+    },
+    "Auto Register Participant": {
+      "main": [
+        []
+      ]
+    },
+    "Recall.ai Attendance Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Event": {
+      "main": [
+        [
+          {
+            "node": "Get Participant Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Participant Events": {
+      "main": [
+        [
+          {
+            "node": "Extract Download URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Download URL": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Participants": {
+      "main": [
+        [
+          {
+            "node": "Extract Name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Name": {
+      "main": [
+        [
+          {
+            "node": "Is Join Event?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Is Leave Event?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Is Done Event?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Join Event?": {
+      "main": [
+        [
+          {
+            "node": "Get IDs for Join",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Leave Event?": {
+      "main": [
+        [
+          {
+            "node": "Get IDs for Leave",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Done Event?": {
+      "main": [
+        [
+          {
+            "node": "Auto Register Participant1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get IDs for Join": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Join": {
+      "main": [
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get IDs for Leave": {
+      "main": [
+        [
+          {
+            "node": "Update Leave Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Leave Time": {
+      "main": [
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Absent (No Join)": {
+      "main": [
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Download Participants",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Is Known Participant?1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Known Participant?1": {
+      "main": [
+        [
+          {
+            "node": "Upsert Join",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Auto Register Participant1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auto Register Participant1": {
+      "main": [
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "7f78f2ec-b4b4-4086-8388-a781ba4e12c5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2ec49346647211f79bda7eec12cd8ff8fbab2658e19393c3ab99a059f6e75e43"
+  },
+  "id": "IuBMixtedZDaY5De",
+  "tags": []
+}

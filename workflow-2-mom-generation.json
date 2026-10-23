@@ -1,0 +1,1029 @@
+{
+  "name": "workflow-2-mom-generation",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6294b716-97d3-4c6d-9a70-c9b00ea3ea8b",
+              "leftValue": "={{ $('Recall.ai Webhook').item.json.body.event }}",
+              "rightValue": "bot.done",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Only When Done",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        2624,
+        3776
+      ],
+      "id": "81e5590b-cb65-4617-bf81-afc23a0b067d",
+      "typeVersion": 2.3
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6294b716-97d3-4c6d-9a70-c9b00ea3ea8b",
+              "leftValue": "={{ $('Recall.ai Webhook').item.json.body.event }}",
+              "rightValue": "bot.done",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Only When Done1",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        3808,
+        5056
+      ],
+      "id": "b955fec4-a97c-4ef8-b974-3dec6753af81",
+      "typeVersion": 2.3
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6294b716-97d3-4c6d-9a70-c9b00ea3ea8b",
+              "leftValue": "={{ $('Recall.ai Webhook').item.json.body.event }}",
+              "rightValue": "bot.done",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Only When Done2",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        2096,
+        4208
+      ],
+      "id": "05ca5327-e8e2-4b31-afb9-b464dcec0dae",
+      "typeVersion": 2.3
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6294b716-97d3-4c6d-9a70-c9b00ea3ea8b",
+              "leftValue": "={{ $('Recall.ai Webhook').item.json.body.event }}",
+              "rightValue": "bot.done",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Only When Done3",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        848,
+        3456
+      ],
+      "id": "7f1cad68-d802-4801-8e71-57c83cf1a9f5",
+      "typeVersion": 2.3
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a8328f7b-61ed-43c7-8577-7ef8b25b1d39",
+              "name": "RECALL_API_KEY",
+              "value": "YOUR_RECALL_API_KEY",
+              "type": "string"
+            },
+            {
+              "id": "e33040e8-56eb-4042-9de7-5f1682e0da1c",
+              "name": "OPENAI_API_KEY",
+              "value": "YOUR_OPENAI_API_KEY",
+              "type": "string"
+            },
+            {
+              "id": "74349680-3e30-4eee-9079-39ff08bd6980",
+              "name": "FROM_EMAIL",
+              "value": "fatimsyedaumayya@gmail.com",
+              "type": "string"
+            },
+            {
+              "id": "4be01e84-292b-45ee-892b-3698a1c15f5d",
+              "name": "ADMIN_EMAIL",
+              "value": "khadijafatima2301@gmail.com",
+              "type": "string"
+            },
+            {
+              "id": "86852185-c6d7-4155-aa9d-7f703355b63c",
+              "name": "APP_URL",
+              "value": "https://meeting-dashboard-gilt.vercel.app",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -3440,
+        2304
+      ],
+      "id": "1719642e-83c8-42a1-b10d-fc9d7a6c96a7",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "recall-webhook",
+        "options": {}
+      },
+      "name": "Recall.ai Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        -3664,
+        2160
+      ],
+      "id": "98358710-5ac1-417b-b00c-d4e62501feb5",
+      "typeVersion": 2.1,
+      "webhookId": "5ab72bbe-b08c-480e-b9b0-5f6c5dfc1c2e"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6294b716-97d3-4c6d-9a70-c9b00ea3ea8b",
+              "leftValue": "={{ $json.event }}",
+              "rightValue": "bot.done",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Only When Done4",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        -1776,
+        2240
+      ],
+      "id": "13c9edf1-94f1-42cb-8bd9-fb3c6f143581",
+      "typeVersion": 2.3
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT m.id as meeting_id \nFROM meetings m\nLEFT JOIN moms mo ON mo.meeting_id = m.id\nWHERE m.recall_bot_id = '{{ $json.body.data.bot.id }}'\nAND mo.id IS NULL\nLIMIT 1",
+        "options": {}
+      },
+      "id": "fc707103-3eb7-4858-aaf1-4e24b576a6ea",
+      "name": "Check No Existing MoM",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -1456,
+        2240
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "dedup-mom-1",
+              "leftValue": "={{ $json.meeting_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "0e1e5b63-2f71-408a-b7a6-1bf6181ba574",
+      "name": "Skip If MoM Exists",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1216,
+        2480
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://us-west-2.recall.ai/api/v1/bot/{{ $('Recall.ai Webhook').item.json.body.data.bot.id }}/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Token {{ $('Edit Fields').item.json.RECALL_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Fetch Transcript",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -3152,
+        1968
+      ],
+      "id": "1b5b51af-f1f8-41e5-9817-a7c947c8a4ec",
+      "typeVersion": 4.4
+    },
+    {
+      "parameters": {
+        "jsCode": "const botData = $input.item.json;\n\nconst transcriptUrl = \n  botData?.recordings?.[0]?.media_shortcuts?.transcript?.data?.download_url ||\n  botData?.recordings?.[0]?.transcript?.download_url ||\n  botData?.media_shortcuts?.transcript?.data?.download_url ||\n  botData?.transcript?.download_url ||\n  \"\";\n\nconst meeting_id = botData?.id || \"\";\n\nconsole.log(\"Bot ID:\", meeting_id);\nconsole.log(\"Transcript URL found:\", transcriptUrl ? \"YES\" : \"NO\");\n\nreturn [{\n  json: {\n    transcript_url: transcriptUrl,\n    meeting_id: meeting_id,\n    has_transcript: transcriptUrl !== \"\"\n  }\n}];"
+      },
+      "name": "Format Transcript",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -3024,
+        2272
+      ],
+      "id": "fd5c5784-a12b-4f1b-bbe5-d91c10780165",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.transcript_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2816,
+        2192
+      ],
+      "id": "fb8ff3f6-e2ef-45b0-9d0a-38d25e0d657d",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const allItems = $input.all();\nlet formattedLines = [];\n\nfor (const item of allItems) {\n  const segment = item.json;\n  const speaker = segment?.participant?.name \n               || segment?.speaker_name \n               || \"Unknown\";\n  const words = segment?.words || [];\n  const text = words.map(w => w.text || \"\").join(\" \").trim();\n  if (text) {\n    formattedLines.push(`${speaker}: ${text}`);\n  }\n}\n\nconst rawTranscript = formattedLines.join(\" | \");\nconst cleanTranscript = rawTranscript\n  .replace(/\\n/g, \" \")\n  .replace(/\\r/g, \" \")\n  .replace(/\\t/g, \" \")\n  .replace(/\"/g, \"'\")\n  .replace(/\\\\/g, \"\");\n\nreturn [{\n  json: {\n    formattedTranscript: cleanTranscript || \"No transcript available.\",\n    meeting_id: $('Format Transcript').item.json.meeting_id\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2656,
+        1920
+      ],
+      "id": "f5bdaa3d-0eb3-4391-8330-fda9eeb1dc58",
+      "name": "Parse Transcript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Edit Fields').item.json.OPENAI_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4o\",\n  \"max_tokens\": 2000,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a professional meeting secretary. Generate Minutes of Meeting in HTML. Output raw HTML only.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"={{ $('Parse Transcript').item.json.formattedTranscript }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "name": "Generate MoM with GPT-4",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -2384,
+        1920
+      ],
+      "id": "69ba32f7-5be9-40f0-8b9e-4560778df643",
+      "typeVersion": 4.4
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.item.json;\nconst meetingId = $('Format Transcript').item.json.meeting_id;\n\nlet momHtml = response.choices[0].message.content;\n\nmomHtml = momHtml\n  .replace(/^```html\\s*/i, '')\n  .replace(/^```\\s*/i, '')\n  .replace(/```\\s*$/i, '')\n  .trim();\n\nreturn [{\n  json: {\n    mom_html: momHtml,\n    meeting_id: meetingId\n  }\n}];"
+      },
+      "name": "Extract MoM HTML",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -2112,
+        1952
+      ],
+      "id": "d41993c1-5c45-4484-a16f-2fd5ddbe0414",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": "public",
+        "table": "meetings",
+        "limit": 1,
+        "where": {
+          "values": [
+            {
+              "column": "recall_bot_id",
+              "value": "={{ $('Recall.ai Webhook').item.json.body.data.bot.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Get Meeting",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        -2208,
+        2448
+      ],
+      "id": "83a66c4b-b1c1-4ecd-b20e-ea12dc91e7d0",
+      "typeVersion": 2.6,
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": "public",
+        "table": "moms",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "meeting_id": "={{ $('Get Meeting').item.json.id }}",
+            "content_html": "={{ $('Extract MoM HTML').item.json.mom_html }}"
+          },
+          "matchingColumns": [
+            "meeting_id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "meeting_id",
+              "displayName": "meeting_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "content_html",
+              "displayName": "content_html",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "doc_url",
+              "displayName": "doc_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "approved_by",
+              "displayName": "approved_by",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "approved_at",
+              "displayName": "approved_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "Save MoM to Supabase",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        -1888,
+        2032
+      ],
+      "id": "c09ae077-c7cb-4c4b-addb-a9fa80a34375",
+      "typeVersion": 2.6,
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": "public",
+        "table": "transcripts",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "meeting_id": "={{ $('Get Meeting').item.json.id }}",
+            "content": "=={{ $('Parse Transcript').item.json.formattedTranscript }}"
+          },
+          "matchingColumns": [
+            "meeting_id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "meeting_id",
+              "displayName": "meeting_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "content",
+              "displayName": "content",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "Save Transcript to Supabase",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        -1664,
+        1952
+      ],
+      "id": "2fa0933f-5eef-42ed-ae0c-44bcabec2a2f",
+      "typeVersion": 2.6,
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": "public",
+        "table": "meetings",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Get Meeting').item.json.id }}",
+            "status": "mom_pending"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "recall_bot_id",
+              "displayName": "recall_bot_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "Update Meeting Status",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        -1392,
+        1904
+      ],
+      "id": "bbbe8c09-483c-4655-9b8d-68e088259570",
+      "typeVersion": 2.6,
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Edit Fields').item.json.ADMIN_EMAIL }}",
+        "subject": "=📋 MoM Ready for Review — {{ $('Get Meeting').item.json.title }}",
+        "message": "=<div style='font-family:sans-serif;max-width:600px;margin:0 auto'><h2 style='color:#1e1b4b'>📋 MoM Ready for Review</h2><p>The Minutes of Meeting for <strong>{{ $('Get Meeting').item.json.title }}</strong> are ready for your review.</p><div style='background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:20px;margin:20px 0'>{{ $('Extract MoM HTML').item.json.mom_html }}</div><p style='margin-top:20px'>Click below to approve and distribute to participants:</p><a href='https://umayyafatima.app.n8n.cloud/webhook/approve-mom?meeting_id={{ $('Get Meeting').item.json.id }}' style='display:inline-block;background:#4f46e5;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;margin-top:8px'>✅ Approve &amp; Send MoM</a><p style='color:#94a3b8;font-size:12px;margin-top:24px'>This email was sent automatically with n8n</p></div>",
+        "options": {}
+      },
+      "name": "Notify Admin for Approval",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        -1152,
+        2176
+      ],
+      "id": "9672f510-48af-4718-8522-7bc5985e2a32",
+      "typeVersion": 2.2,
+      "webhookId": "3304806b-be12-417d-8083-847964e08c04",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "tnayGCfWNoL9m6ok",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT p.id, p.name, p.email\nFROM meeting_participants mp\nJOIN participants p ON p.id = mp.participant_id\nWHERE mp.meeting_id = '{{ $('Get Meeting').item.json.id }}'\n  AND mp.attendance_status = 'present'\n  AND p.email IS NOT NULL\n  AND p.email != ''\n  AND p.email NOT LIKE '%@unknown.com'",
+        "options": {}
+      },
+      "name": "Get Present Participants",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        -912,
+        2176
+      ],
+      "id": "fdb7e052-b338-441b-9ff5-5f1968287233",
+      "typeVersion": 2.6,
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pull all participant rows from previous node\nconst participants = $input.all();\n\n// Grab mom_html and meeting title from earlier nodes — attach directly to each item\n// so Gmail never needs to reach back across the broken item chain\nconst momHtml = $('Extract MoM HTML').item.json.mom_html;\nconst meetingTitle = $('Get Meeting').item.json.title;\nconst meetingId = $('Get Meeting').item.json.id;\n\nif (!participants || participants.length === 0) {\n  // No participants — return a dummy item so workflow doesn't crash\n  return [{ json: { skip: true, email: null, name: null, mom_html: momHtml, meeting_title: meetingTitle } }];\n}\n\n// Return one self-contained item per participant\nreturn participants.map(p => ({\n  json: {\n    skip: false,\n    email: p.json.email,\n    name: p.json.name || 'Participant',\n    mom_html: momHtml,\n    meeting_title: meetingTitle,\n    meeting_id: meetingId\n  }\n}));"
+      },
+      "name": "Build Participant Email Items",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        -672,
+        2176
+      ],
+      "id": "5a48ec0d-d137-435d-96d2-a13dfdfd8323",
+      "typeVersion": 2,
+      "notes": "Attaches mom_html + meeting title directly onto each participant item — fixes the undefined/split error"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "skip-check-1",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Has Valid Email?",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        -432,
+        2176
+      ],
+      "id": "86fffd52-5e59-4aa4-8f8e-11a02769ef6e",
+      "typeVersion": 2.3,
+      "notes": "Skips dummy items if no participants were found"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "=📋 Minutes of Meeting — {{ $json.meeting_title }}",
+        "message": "=<div style='font-family:sans-serif;max-width:600px;margin:0 auto'>\n  <h2 style='color:#1e1b4b'>📋 Minutes of Meeting</h2>\n  <p>Hi <strong>{{ $json.name }}</strong>,</p>\n  <p>Please find the Minutes of Meeting for <strong>{{ $json.meeting_title }}</strong> below.</p>\n  <div style='background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:20px;margin:20px 0'>\n    {{ $json.mom_html }}\n  </div>\n  <p style='color:#94a3b8;font-size:12px;margin-top:24px'>This email was sent automatically. Please do not reply.</p>\n</div>",
+        "options": {}
+      },
+      "name": "Send MoM to Participant",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        -192,
+        2096
+      ],
+      "id": "bf445514-08f4-437a-996e-57ab78f3468f",
+      "typeVersion": 2.2,
+      "webhookId": "b45d4dd8-98ff-4740-b83a-d481dd34282a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "tnayGCfWNoL9m6ok",
+          "name": "Gmail OAuth2 API"
+        }
+      },
+      "notes": "All data comes from $json — no cross-node references — loops once per participant"
+    }
+  ],
+  "connections": {
+    "Recall.ai Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Fetch Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only When Done4": {
+      "main": [
+        [
+          {
+            "node": "Check No Existing MoM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check No Existing MoM": {
+      "main": [
+        [
+          {
+            "node": "Skip If MoM Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip If MoM Exists": {
+      "main": [
+        [
+          {
+            "node": "Fetch Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Transcript": {
+      "main": [
+        [
+          {
+            "node": "Format Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Transcript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Parse Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Transcript": {
+      "main": [
+        [
+          {
+            "node": "Generate MoM with GPT-4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate MoM with GPT-4": {
+      "main": [
+        [
+          {
+            "node": "Extract MoM HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract MoM HTML": {
+      "main": [
+        [
+          {
+            "node": "Get Meeting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Meeting": {
+      "main": [
+        [
+          {
+            "node": "Save MoM to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save MoM to Supabase": {
+      "main": [
+        [
+          {
+            "node": "Save Transcript to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Transcript to Supabase": {
+      "main": [
+        [
+          {
+            "node": "Update Meeting Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Meeting Status": {
+      "main": [
+        [
+          {
+            "node": "Notify Admin for Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Admin for Approval": {
+      "main": [
+        [
+          {
+            "node": "Get Present Participants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Present Participants": {
+      "main": [
+        [
+          {
+            "node": "Build Participant Email Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Participant Email Items": {
+      "main": [
+        [
+          {
+            "node": "Has Valid Email?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Valid Email?": {
+      "main": [
+        [
+          {
+            "node": "Send MoM to Participant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "2db6feb7-09f1-44be-acd4-4556a252265e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2ec49346647211f79bda7eec12cd8ff8fbab2658e19393c3ab99a059f6e75e43"
+  },
+  "id": "oE4s3XSxuWTJ1Wze",
+  "tags": []
+}

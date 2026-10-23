@@ -1,0 +1,553 @@
+{
+  "name": "workflow-3-distribution-ack-v2",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e83eb008-489a-4acb-9699-0792d3c61ffd",
+              "name": "FROM_EMAIL",
+              "value": "fatimsyedaumayya@gmail.com",
+              "type": "string"
+            },
+            {
+              "id": "8de8f0ed-c960-4234-bce1-b30882c15af1",
+              "name": "ADMIN_EMAIL",
+              "value": "khadijafatima2301@gmail.com",
+              "type": "string"
+            },
+            {
+              "id": "66098f3c-07bb-41ae-aa4c-48fe97966492",
+              "name": "APP_URL",
+              "value": "https://meeting-dashboard-gilt.vercel.app",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1008,
+        272
+      ],
+      "id": "e5c512d0-772b-4b17-b307-8241dbe85332",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": "public",
+        "table": "meetings",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Approval Webhook').item.json.query.meeting_id }}",
+            "status": "mom_approved"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "Update Status to Approved",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        -800,
+        272
+      ],
+      "id": "c0845780-dbe2-44ec-afaa-89c99c9104b4",
+      "typeVersion": 2.6,
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      },
+      "notes": "FIX: removed stray meeting_number=0, pinned to Approval Webhook body"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": "public",
+        "table": "moms",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "meeting_id": "={{ $('Approval Webhook').item.json.query.meeting_id }}",
+            "approved_by": "={{ $('Approval Webhook').item.json.body.approved_by }}",
+            "approved_at": "={{ $now }}"
+          },
+          "matchingColumns": [
+            "meeting_id"
+          ],
+          "schema": [
+            {
+              "id": "meeting_id",
+              "displayName": "meeting_id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "approved_by",
+              "displayName": "approved_by",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "approved_at",
+              "displayName": "approved_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "Mark MoM Approved",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        -592,
+        272
+      ],
+      "id": "6e2c2230-7b00-464f-86a6-9b623de5f63c",
+      "typeVersion": 2.6,
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      },
+      "notes": "FIX: match on meeting_id (not id), added approved_at, pinned expressions to Approval Webhook"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  mp.meeting_id,\n  p.id AS participant_id,\n  p.name,\n  p.email,\n  m.title AS meeting_title,\n  TO_CHAR(m.date AT TIME ZONE 'UTC', 'DD Mon YYYY') AS meeting_date,\n  mo.content_html AS mom_html,\n  mo.id AS mom_id\nFROM meeting_participants mp\nJOIN participants p ON p.id = mp.participant_id\nJOIN meetings m ON m.id = mp.meeting_id\nJOIN moms mo ON mo.meeting_id = m.id\nWHERE mp.meeting_id = $1",
+        "options": {
+          "queryBatching": "independently",
+          "queryReplacement": "={{ $('Approval Webhook').item.json.query.meeting_id }}"
+        }
+      },
+      "name": "Get All Participants",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        -384,
+        272
+      ],
+      "id": "28deef0c-2677-4726-bec7-c6a947c89b58",
+      "typeVersion": 2.6,
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      },
+      "notes": "FIX v2: parameterized query ($1) — no more Handlebars in SQL. meeting_id passed via queryReplacement."
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Split per Participant",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [
+        -160,
+        272
+      ],
+      "id": "bc70155a-6e8e-4f68-81c5-58ac518fd9d3",
+      "typeVersion": 3,
+      "notes": "FIX v2: explicit batchSize=1 for clarity."
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO acknowledgments (meeting_id, participant_id, status, email_sent_at)\nVALUES ($1, $2, 'pending', NOW())\nON CONFLICT (meeting_id, participant_id) \nDO UPDATE SET \n  status = 'pending',\n  email_sent_at = NOW(),\n  ack_token = gen_random_uuid()::text\nRETURNING id, ack_token, meeting_id, participant_id, status, email_sent_at",
+        "options": {
+          "queryBatching": "independently",
+          "queryReplacement": "=={{ $json.meeting_id }},={{ $json.participant_id }}"
+        }
+      },
+      "name": "Create ACK Record",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        144,
+        304
+      ],
+      "id": "20601751-6c2d-49f4-86c0-57f2cb9446f7",
+      "typeVersion": 2.6,
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      },
+      "notes": "FIX v2: INSERT ... RETURNING ack_token so Send MoM Email can build the ack link. email_sent_at set here via NOW()."
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Split per Participant').item.json.email }}",
+        "subject": "=📋 Minutes of Meeting — {{ $('Split per Participant').item.json.meeting_title }}",
+        "message": "=<div style='font-family:sans-serif;max-width:600px;margin:0 auto'>\n  <h2 style='color:#1e1b4b'>Minutes of Meeting</h2>\n  <p>Hi <strong>{{ $('Split per Participant').item.json.name }}</strong>,</p>\n  <p>The minutes for <strong>{{ $('Split per Participant').item.json.meeting_title }}</strong> held on {{ $('Split per Participant').item.json.meeting_date }} are now available.</p>\n  <div style='background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:20px;margin:20px 0'>\n    {{ $('Split per Participant').item.json.mom_html }}\n  </div>\n  <p>Please acknowledge receipt by clicking below:</p>\n  <a href='https://umayyafatima.app.n8n.cloud/webhook/5788fd2c-81cd-4720-93b5-03ae784197c5/ack/{{ $json.ack_token }}' style='display:inline-block;background:#4f46e5;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;'>✅ I have read the MoM</a>\n  <p style='color:#94a3b8;font-size:12px;margin-top:20px'>If you have any corrections, please reply to this email.</p>\n  <p style='color:#94a3b8;font-size:12px'><em>This email was sent automatically via n8n</em></p>\n</div>",
+        "options": {}
+      },
+      "name": "Send MoM Email",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        400,
+        272
+      ],
+      "id": "8474cc19-2e86-4397-9853-a134511c89da",
+      "typeVersion": 2.2,
+      "webhookId": "645112ed-5dd9-4d6a-8834-6c9977e3b197",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "tnayGCfWNoL9m6ok",
+          "name": "Gmail OAuth2 API"
+        }
+      },
+      "notes": "FIX v2: $json.ack_token comes from Create ACK Record RETURNING. All participant fields pinned to Split per Participant."
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": "public",
+        "table": "acknowledgments",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Create ACK Record').item.json.id }}",
+            "email_sent_at": "={{ $now }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email_sent_at",
+              "displayName": "email_sent_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "name": "Log Email Sent",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        576,
+        512
+      ],
+      "id": "b5608e04-355a-4c1d-aefd-1a2c3d4a55fa",
+      "typeVersion": 2.6,
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      },
+      "notes": "NOTE v2: email_sent_at already set by Create ACK Record RETURNING. This node is now a no-op safety net. Safe to remove."
+    },
+    {
+      "parameters": {
+        "path": "ack/:token",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "ACK Link Clicked",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        -512,
+        496
+      ],
+      "id": "ee187efb-3446-497c-ac88-8fba52ea067c",
+      "typeVersion": 2.1,
+      "webhookId": "5788fd2c-81cd-4720-93b5-03ae784197c5",
+      "notes": "Public URL: https://umayya.app.n8n.cloud/webhook/ack/:token — participant clicks from email"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE acknowledgments \nSET status = 'acknowledged', acked_at = NOW()\nWHERE ack_token = '{{ $(\"ACK Link Clicked\").item.json.params.token }}'",
+        "options": {}
+      },
+      "name": "Mark Acknowledged",
+      "type": "n8n-nodes-base.postgres",
+      "position": [
+        -256,
+        496
+      ],
+      "id": "4f6029c9-1962-4857-902b-308b21b65a55",
+      "typeVersion": 2.6,
+      "credentials": {
+        "postgres": {
+          "id": "lqgZmYxbHnJJJVbr",
+          "name": "Postgres account"
+        }
+      },
+      "notes": "FIX: match on ack_token column (not id). Use $json.params.token for path param :token"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<!DOCTYPE html>\n<html>\n<head><title>Confirmed</title>\n<style>body{font-family:Arial;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#f0f9ff;}\n.box{text-align:center;padding:40px;background:white;border-radius:12px;box-shadow:0 2px 20px rgba(0,0,0,0.1);}\nh1{color:#16a34a;}p{color:#555;}</style></head>\n<body><div class='box'>\n<h1>✅ Acknowledged!</h1>\n<p>You have successfully acknowledged receipt of the Minutes of Meeting.</p>\n<p style='font-size:12px;color:#999;'>You may close this window.</p>\n</div></body></html>",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html"
+              }
+            ]
+          }
+        }
+      },
+      "id": "d608af37-bc51-420f-bcfd-f8d5f74757f8",
+      "name": "Respond with ACK Page",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<!DOCTYPE html><html><body style=\"font-family:sans-serif;text-align:center;padding:80px;background:#f0fdf4\"><div style=\"background:white;border-radius:16px;padding:48px;max-width:480px;margin:0 auto;box-shadow:0 4px 24px rgba(0,0,0,0.1)\"><div style=\"font-size:64px\">✅</div><h1 style=\"color:#059669\">MoM Approved!</h1><p style=\"color:#64748b\">Minutes of Meeting sent to all participants successfully.</p></div></body></html>",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3abc82b5-653e-486c-a11c-f8beb357e075",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "path": "approve-mom",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Approval Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        -1232,
+        272
+      ],
+      "id": "a15c1323-dde9-4084-b337-f12000f4de94",
+      "typeVersion": 2.1,
+      "webhookId": "33cdec17-ae3c-4c0a-9885-ccdefd7e0dd0",
+      "notes": "Triggered when admin clicks Approve. Frontend POSTs { meeting_id, approved_by }"
+    }
+  ],
+  "connections": {
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Update Status to Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status to Approved": {
+      "main": [
+        [
+          {
+            "node": "Mark MoM Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark MoM Approved": {
+      "main": [
+        [
+          {
+            "node": "Get All Participants",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Participants": {
+      "main": [
+        [
+          {
+            "node": "Split per Participant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split per Participant": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create ACK Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create ACK Record": {
+      "main": [
+        [
+          {
+            "node": "Send MoM Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send MoM Email": {
+      "main": [
+        [
+          {
+            "node": "Log Email Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ACK Link Clicked": {
+      "main": [
+        [
+          {
+            "node": "Mark Acknowledged",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Acknowledged": {
+      "main": [
+        [
+          {
+            "node": "Respond with ACK Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Email Sent": {
+      "main": [
+        [
+          {
+            "node": "Split per Participant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approval Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "01ac2c14-533e-44b2-84e6-99d88da8f023",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2ec49346647211f79bda7eec12cd8ff8fbab2658e19393c3ab99a059f6e75e43"
+  },
+  "id": "jwoTxisDIqjHWYhi",
+  "tags": []
+}
