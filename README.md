@@ -24,4 +24,4 @@ n8n · Recall.ai · OpenAI API · Supabase (Postgres) · Gmail OAuth2 · Google 
 4. Replace the webhook base URL (`https://<your-instance>.app.n8n.cloud`) and the example emails with your own.
 5. Activate the workflows.
 
-> Credentials are **not** included in this repo. Never commit API keys.
+> Credentials are **not** included in this repo.Never commit API keys.
